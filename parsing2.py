@@ -5,14 +5,14 @@ Created on Thu Jun 30 11:54:17 2016
 @author: Sandra
 """
 
-import re, string, math
+import re, string, math,os
 
 path = "D:\\F\\treca godina\\sesti semestar\\ORI\\data\\musko.mbox"
 #path = "D:\\F\\treca godina\\sesti semestar\\ORI\\PROJEKAT\\proba.txt"
 
 def parse_file(path,dataset_path):
     f = open(path, 'r')
-    f2 = open(dataset_path,"a")
+    f2 = open(os.path.join(os.pardir, dataset_path),"a")
     lines = f.readlines()
     f.close()
     i = 0     
@@ -27,7 +27,7 @@ def parse_file(path,dataset_path):
         if plainContentType:
             #samo na pocetku, da se ispise zaglavlje poruke
             if not headerWrote:
-                print "***NOVA PORUKA:"
+                #print "***NOVA PORUKA:"
                 f2.write("==================================")
                 f2.writelines("\n")
                 f2.writelines("\n")
@@ -42,7 +42,7 @@ def parse_file(path,dataset_path):
                 #ako nije stigao do kraja
                 if len(line)>1 and not any([line.startswith(s) for s in ["This is a copy of a message sent to","X-","=20","Date: ","Content","--",">"]]) and not any([s in line for s in ["You received this email because","To change or turn off email notifications","charset","format=flowed","2013/","2012/","2011/","https:/","http:"]]): 
                         f2.write(line)                    
-                        print line
+                        #print line
                         
             
         if line.startswith("--"):
@@ -67,9 +67,9 @@ def preprocess(text):
         
     text = text.lower()
     text = re.sub('[^a-zA-Z]+', ' ', text).strip()
-    print text
+    #print text
     return text
 
             
-parse_file(path,"datasetprobni.txt")
-preprocess("odr=C5=BEavanja laboratorijskih ve=C5=BEbi.")
+#parse_file(path,"datasetprobni.txt")
+#preprocess("odr=C5=BEavanja laboratorijskih ve=C5=BEbi.")

@@ -7,16 +7,12 @@ Created on Sat Jul 02 18:31:45 2016
 from __future__ import print_function
 import math
 from parsing2 import *
+from feature2_word_length import fit2, predict2
 
-def load_data():
-    # TODO 1: ucitati podatke iz data/train.tsv datoteke
-    # rezultat treba da budu dve liste, texts i sentiments
-    emails, genders = [], []
-    
-    parse_file("D:\\F\\treca godina\\sesti semestar\\ORI\\data\\musko.mbox","male_dataset.txt")
-    parse_file("D:\\F\\treca godina\\sesti semestar\\ORI\\data\\zensko.mbox","female_dataset.txt")
-          
-    f = open("male_dataset.txt", 'r')
+def load_data(male_data, female_data):
+    emails = []
+    genders = []
+    f = open(os.path.join(os.pardir, male_data), 'r')
     lines = f.readlines()
     f.close()
     email = ""
@@ -30,7 +26,7 @@ def load_data():
             email += line
             
             
-    f = open("female_dataset.txt", 'r')
+    f = open(os.path.join(os.pardir, female_data), 'r')
     lines = f.readlines()
     f.close()
     email = ""
@@ -44,6 +40,15 @@ def load_data():
         
 
     return emails, genders
+
+def generate_dataset():
+    # TODO 1: ucitati podatke iz data/train.tsv datoteke
+    # rezultat treba da budu dve liste, texts i sentiments
+    
+    parse_file("D:\\F\\treca godina\\sesti semestar\\ORI\\data\\musko.mbox","data\\male_dataset.txt")
+    parse_file("D:\\F\\treca godina\\sesti semestar\\ORI\\data\\zensko.mbox","data\\female_dataset.txt")
+    
+    return load_data("data\\male_dataset.txt","data\\female_dataset.txt")
     
 
 
@@ -157,16 +162,20 @@ def predict(email, bag_of_words, words_count, emails_count):
  
     return {'male': score_pos, 'female': score_neg}
     
+
+    
     
 if __name__ == '__main__':
-    # ucitavanje data seta
-    emails, genders = load_data()
+    # ucitavanje data seta (sa i bez generisanjem)
+    #emails, genders = generate_dataset()
+    emails, genders = load_data("data\\male_dataset.txt","data\\female_dataset.txt")
 
     # izracunavanje / prebrojavanje stvari potrebnih za primenu Naivnog Bayesa
     bag_of_words, words_count, emails_count = fit(emails, genders)
 
     # recenzija
-    email = 'Vezbe iz C++ su u nedelju, dodjite. Branko'
+    #email = 'Vezbe iz C++ su u nedelju, dodjite. Branko'
+    email = 'Devojke, sta radite u ponedeljak? Kada vam je ispit? '
 
     # klasifikovati sentiment recenzije koriscenjem Naivnog Bayes klasifikatora
     predictions = predict(email, bag_of_words, words_count, emails_count)
@@ -175,4 +184,15 @@ if __name__ == '__main__':
     print('Email: {0}'.format(email))
     print('Score(male): {0}'.format(predictions['male']))
     print('Score(female): {0}'.format(predictions['female']))
+    
+    bag_of_words, words_count, emails_count = fit2(emails, genders)
+    # klasifikovati sentiment recenzije koriscenjem Naivnog Bayes klasifikatora
+    predictions = predict2(email,bag_of_words, words_count, emails_count)
+    
+    print('-'*30)
+    print('Email: {0}'.format(email))
+    print('Score(male): {0}'.format(predictions['male']))
+    print('Score(female): {0}'.format(predictions['female']))
+    
+    
 
