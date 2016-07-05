@@ -6,6 +6,7 @@ Created on Sat Jul 02 18:31:45 2016
 """
 from __future__ import print_function
 import math
+from numpy import inf
 from parsing2 import *
 from feature2_word_length import fit2, predict2
 
@@ -114,10 +115,7 @@ def fit(emails, genders):
     
     return bag_of_words, words_count, emails_count
     
-    
-    
-    
-def predict(email, bag_of_words, words_count, emails_count):
+def predict(email, bag_of_words, words_count, emails_count, k = 0):
     words = tokenize(email)                 # tokenizacija teksta
     #counts = count_words(words)            # prebrojavanje reci u tekstu
     
@@ -130,7 +128,7 @@ def predict(email, bag_of_words, words_count, emails_count):
     num_of_words = float(sum(num_of_words_in_corpus.values()))
  
     # TODO 6: implementiran Naivni Bayes klasifikator za sentiment teksta (recenzije)
-    score_pos, score_neg = 0.0, 0.0
+    score_female, score_male = 0.0, 0.0
     
     # P(pol) = #m ili z mailovi / #svi mailovi
     p_gender = {"male": 0.0, "female": 0.0}
@@ -150,20 +148,48 @@ def predict(email, bag_of_words, words_count, emails_count):
         
         for gender in p_words.keys():
             if words_count[gender].has_key(word) and words_count[gender][word] > 0:
-                # P(rec|pol)
-                word_if_gender_p[gender] = words_count[gender][word] / num_of_words_in_corpus[gender]
+                # P(rec|pol) = #pojavljivanje te reci u m ili z mailovima + k /  #br reci u m ili z korpusu + k * #br reci u m ili z korpusu
+                word_if_gender_p[gender] = (words_count[gender][word] + k) / (num_of_words_in_corpus[gender] + k*len(words_count[gender]))
+                #print("word_if_gender_p[{0}] = {1}   word = {2}".format(gender,word_if_gender_p[gender],word))
                 # suma logaritama: log( P(rec|pol) / P(rec))
-                p_words[gender] += math.log(word_if_gender_p[gender] / word_p)
-    
-    
-    score_pos = math.exp(p_words['male'] + math.log(p_gender['male']))
-    score_neg = math.exp(p_words['female'] + math.log(p_gender['female']))
-        
+                p_words[gender] += math.log(word_if_gender_p[gender]  / word_p)
+                #print("math.log(word_if_gender_p[gender] = {0}   word = {1}".format(math.log(word_if_gender_p[gender]),word))
+
+                 
+    #print("p_words['female'] = {0}  ".format(p_words['female']))
+    score_male = math.exp(p_words['male'] + math.log(p_gender['male']))
+    score_female = math.exp(p_words['female'] + math.log(p_gender['female']))
+
+    male_probability = score_male/(score_female+score_male)
+    female_probability = score_female/(score_female+score_male)
  
-    return {'male': score_pos, 'female': score_neg}
+    return {'male': score_male, 'female': score_female, 'male_probability':male_probability, 'female_probability': female_probability}
     
 
+def detect_overfitting(bag_of_words,words_count):
+    male_word_overfitting = {}
     
+    for word in bag_of_words.keys():
+        #print("word: ",word)
+        # P(rec|male) / P(rec|female)
+        if words_count["female"].has_key(word) and words_count["female"][word] > 0:
+            if words_count["male"].has_key(word) and words_count["male"][word]>0:
+                male_word_overfitting[word] = float(words_count["male"][word]) / float(words_count["female"][word])
+                #print("words_count[male][{0}] = {1}, words_count[female][{0}] = {2}".format(word,words_count["male"][word], words_count["female"][word]))                
+                #print("male_word_overfitting[{0}] = {1}".format(word,male_word_overfitting[word]))
+            else:
+                male_word_overfitting[word] = 0
+                #if male_word_overfitting[word] == 0:
+                    #print("{0}, u muskim: {1}, u zenskim: {2}, ratio: {3}".format(word,0, words_count["female"][word], 0))
+
+        else:
+            male_word_overfitting[word] = inf
+            
+        
+    return male_word_overfitting
+        
+        
+        
     
 if __name__ == '__main__':
     # ucitavanje data seta (sa i bez generisanjem)
@@ -184,6 +210,18 @@ if __name__ == '__main__':
     print('Email: {0}'.format(email))
     print('Score(male): {0}'.format(predictions['male']))
     print('Score(female): {0}'.format(predictions['female']))
+    print('Probability(male): {0}'.format(predictions['male_probability']))
+    print('Probability(female): {0}'.format(predictions['female_probability']))
+    
+    # klasifikovati sentiment recenzije koriscenjem Naivnog Bayes klasifikatora
+    predictions = predict(email, bag_of_words, words_count, emails_count, 1)
+    print('-'*30)
+    print('Laplasova estimacija')
+    print('Score(male): {0}'.format(predictions['male']))
+    print('Score(female): {0}'.format(predictions['female']))
+    print('Probability(male): {0}'.format(predictions['male_probability']))
+    print('Probability(female): {0}'.format(predictions['female_probability']))
+        
     
     bag_of_words, words_count, emails_count = fit2(emails, genders)
     # klasifikovati sentiment recenzije koriscenjem Naivnog Bayes klasifikatora
