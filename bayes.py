@@ -143,8 +143,9 @@ def predict(email, bag_of_words, words_count, emails_count, k = 0):
     p_words = {"male": 0.0, "female":0.0}
     word_if_gender_p = {"male": 0.0, "female":0.0}
     for word in words:
-        # P(rec)
-        word_p = bag_of_words[word] / num_of_words
+        if bag_of_words.has_key(word):
+            # P(rec)
+            word_p = bag_of_words[word] / num_of_words
         
         for gender in p_words.keys():
             if words_count[gender].has_key(word) and words_count[gender][word] > 0:
@@ -154,7 +155,6 @@ def predict(email, bag_of_words, words_count, emails_count, k = 0):
                 # suma logaritama: log( P(rec|pol) / P(rec))
                 p_words[gender] += math.log(word_if_gender_p[gender]  / word_p)
                 #print("math.log(word_if_gender_p[gender] = {0}   word = {1}".format(math.log(word_if_gender_p[gender]),word))
-
                  
     #print("p_words['female'] = {0}  ".format(p_words['female']))
     score_male = math.exp(p_words['male'] + math.log(p_gender['male']))
@@ -193,15 +193,15 @@ def detect_overfitting(bag_of_words,words_count):
     
 if __name__ == '__main__':
     # ucitavanje data seta (sa i bez generisanjem)
-    #emails, genders = generate_dataset()
-    emails, genders = load_data("data\\male_dataset.txt","data\\female_dataset.txt")
+    emails, genders = generate_dataset()
+    #emails, genders = load_data("data\\male_dataset.txt","data\\female_dataset.txt")
 
     # izracunavanje / prebrojavanje stvari potrebnih za primenu Naivnog Bayesa
     bag_of_words, words_count, emails_count = fit(emails, genders)
 
     # recenzija
     #email = 'Vezbe iz C++ su u nedelju, dodjite. Branko'
-    email = 'Devojke, sta radite u ponedeljak? Kada vam je ispit? '
+    email = 'Devojke, sta radite u ponedeljak? Kada vam je ispit? Dragana'
 
     # klasifikovati sentiment recenzije koriscenjem Naivnog Bayes klasifikatora
     predictions = predict(email, bag_of_words, words_count, emails_count)
